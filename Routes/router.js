@@ -129,6 +129,77 @@
 // module.exports = router;
 
 
+// const express = require('express');
+// const router = new express.Router();
+// const nodemailer = require('nodemailer');
+// const User = require('../models/userSchema');
+// const bcrypt = require('bcryptjs');
+// const jwt = require('jsonwebtoken');
+
+// // Email config
+// const transporter = nodemailer.createTransport({
+//     service: 'gmail',
+//     auth: {
+//         user: process.env.EMAIL,
+//         pass: process.env.PASS
+//     }
+// });
+
+// // Register Route
+// router.post('/register', async (req, res) => {
+//     const { fname, lname, email, password, mobile, message } = req.body;
+
+//     if (!fname || !lname || !email || !password || !mobile) {
+//         return res.status(400).json({ error: 'All Input required' });
+//     }
+
+//     try {
+//         // Check if user already exists
+//         const existingUser = await User.findOne({ email: email });
+//         if (existingUser) {
+//             return res.status(400).json({ error: 'User already exists' });
+//         }
+
+//         // Hash password
+//         const hashedPassword = await bcrypt.hash(password, 10);
+
+//         // Create new user
+//         const newUser = new User({
+//             fname, lname, email, password: hashedPassword, mobile, messages: { message: message }
+//         });
+
+//         // Save user to database
+//         const savedUser = await newUser.save();
+
+//         // Send confirmation email
+//         const mailOptions = {
+//             from: process.env.EMAIL,
+//             to: email,
+//             subject: 'Contact Form Response',
+//             text: 'Your response has been submitted successfully.'
+//         };
+//         transporter.sendMail(mailOptions, (error, info) => {
+//             if (error) {
+//                 console.log('Email error: ', error);
+//                 return res.status(500).json({ error: 'Email sending failed' });
+//             } else {
+//                 console.log('Email sent: ', info.response);
+//             }
+//         });
+
+//         // Generate JWT token
+//         const token = jwt.sign({ id: savedUser._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+//         res.status(201).json({ token, message: 'User registered and email sent successfully' });
+//     } catch (error) {
+//         console.error('Server error: ', error);
+//         res.status(500).json({ error: 'Server error' });
+//     }
+// });
+
+// module.exports = router;
+
+
 const express = require('express');
 const router = new express.Router();
 const nodemailer = require('nodemailer');
@@ -150,7 +221,7 @@ router.post('/register', async (req, res) => {
     const { fname, lname, email, password, mobile, message } = req.body;
 
     if (!fname || !lname || !email || !password || !mobile) {
-        return res.status(400).json({ error: 'All Input required' });
+        return res.status(400).json({ error: 'All input fields are required' });
     }
 
     try {
@@ -165,11 +236,16 @@ router.post('/register', async (req, res) => {
 
         // Create new user
         const newUser = new User({
-            fname, lname, email, password: hashedPassword, mobile, messages: { message: message }
+            fname, lname, email, password: hashedPassword, mobile
         });
 
         // Save user to database
         const savedUser = await newUser.save();
+
+        // Save message if provided
+        if (message) {
+            await savedUser.Messagesave(message);
+        }
 
         // Send confirmation email
         const mailOptions = {
